@@ -25,6 +25,8 @@ export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null); // Initialize as null
   const [error, setError] = useState('');
   const [mounted, setMounted] = useState(false);
+  const [projectType, setProjectType] = useState('web');
+  const [imageData, setImageData] = useState<string | undefined>();
   const searchParams = useSearchParams();
 
   useEffect(() => {
@@ -43,13 +45,24 @@ export default function Home() {
     return null;
   }
 
+  const handleImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImageData(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!isLoggedIn) return;
     
     setLoading(true);
     try {
-      const result = await generatePrompt(prompt);
+      const result = await generatePrompt(prompt, projectType, imageData);
       setResponse(result);
     } catch (error) {
       console.error('Error:', error);
@@ -111,19 +124,47 @@ export default function Home() {
                 <div className="space-y-4">
                   <div className="flex justify-between items-center">
                     <h2 className="text-lg font-medium">Generate your prompt</h2>
-                    <Select defaultValue="cursor">
+                    <Select 
+                      defaultValue="web"
+                      onValueChange={setProjectType}
+                    >
                       <SelectTrigger className="w-[120px] bg-zinc-900 border-zinc-800">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="cursor">Cursor</SelectItem>
-                        <SelectItem value="bolt">Bolt</SelectItem>
-                        <SelectItem value="v0">v0</SelectItem>
+                        <SelectItem value="web">Web App</SelectItem>
+                        <SelectItem value="mobile">Mobile</SelectItem>
+                        <SelectItem value="ai">AI/ML</SelectItem>
+                        <SelectItem value="desktop">Desktop</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <UploadArea />
+                  <div className="space-y-4">
+                    <label className="block text-sm font-medium text-gray-300">
+                      Upload Image (optional)
+                    </label>
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                      className="block w-full text-sm text-gray-300
+                        file:mr-4 file:py-2 file:px-4
+                        file:rounded-md file:border-0
+                        file:text-sm file:font-semibold
+                        file:bg-zinc-800 file:text-white
+                        hover:file:bg-zinc-700"
+                    />
+                    {imageData && (
+                      <div className="mt-2">
+                        <img 
+                          src={imageData} 
+                          alt="Uploaded preview" 
+                          className="max-w-xs rounded-lg"
+                        />
+                      </div>
+                    )}
+                  </div>
 
                   <Textarea
                     placeholder="Describe what you want to build..."
