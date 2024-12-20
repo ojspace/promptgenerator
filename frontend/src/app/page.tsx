@@ -22,21 +22,26 @@ export default function Home() {
   const [prompt, setPrompt] = useState('');
   const [response, setResponse] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState<boolean | null>(null); // Initialize as null
   const [error, setError] = useState('');
+  const [mounted, setMounted] = useState(false);
   const searchParams = useSearchParams();
 
   useEffect(() => {
-    // Check if user is already logged in
+    setMounted(true);
     const loggedIn = localStorage.getItem('isLoggedIn') === 'true';
     setIsLoggedIn(loggedIn);
 
-    // Check for error in URL params
     const errorParam = searchParams.get('error');
     if (errorParam === 'invalid_token') {
       setError('Invalid or expired magic link. Please try logging in again.');
     }
   }, [searchParams]);
+
+  // Don't render anything until after mount
+  if (!mounted) {
+    return null;
+  }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +62,6 @@ export default function Home() {
     setError('');
     try {
       await sendMagicLink(email);
-      // Show success message in the LoginOverlay component
       return true;
     } catch (error) {
       console.error('Error sending magic link:', error);
@@ -76,7 +80,7 @@ export default function Home() {
     <div className="min-h-screen bg-black text-white">
       <Nav onLogout={isLoggedIn ? handleLogout : undefined} />
       
-      <main className={`container mx-auto px-4 pt-24 ${!isLoggedIn ? 'filter blur-sm pointer-events-none' : ''}`}>
+      <main className="container mx-auto px-4 pt-24">
         <div className="grid lg:grid-cols-2 gap-12 items-start">
           {/* Left Column */}
           <div className="space-y-6">
@@ -101,66 +105,56 @@ export default function Home() {
           </div>
 
           {/* Right Column */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <UploadArea />
-            
-            <div className="space-y-4">
-              <p className="text-sm text-zinc-400">Or enter your prompt:</p>
-              <Textarea
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                placeholder="Describe what you want to generate..."
-                className="min-h-[100px] bg-zinc-900 border-zinc-800 text-white placeholder:text-zinc-500"
-              />
-            </div>
-            
-            <div className="space-y-4">
-              <p className="text-sm text-zinc-400">Choose analysis focus:</p>
-              <Select>
-                <SelectTrigger className="w-full bg-zinc-900 border-zinc-800">
-                  <SelectValue placeholder="Web applications" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="web">Web applications</SelectItem>
-                  <SelectItem value="mobile">Mobile applications</SelectItem>
-                  <SelectItem value="desktop">Desktop applications</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+          <div className="space-y-6 relative">
+            <div className={isLoggedIn === false ? 'filter blur-sm' : ''}>
+              <form onSubmit={handleSubmit} className="space-y-4">
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <h2 className="text-lg font-medium">Generate your prompt</h2>
+                    <Select defaultValue="cursor">
+                      <SelectTrigger className="w-[120px] bg-zinc-900 border-zinc-800">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="cursor">Cursor</SelectItem>
+                        <SelectItem value="bolt">Bolt</SelectItem>
+                        <SelectItem value="v0">v0</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
 
-            <Button 
-              type="submit"
-              disabled={loading || !isLoggedIn}
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-            >
-              {loading ? 'Generating...' : 'Generate prompt'}
-            </Button>
+                  <UploadArea />
 
-            <p className="text-center text-sm text-zinc-500">
-              Prompts generated: 0 / 50
-            </p>
-
-            {response && (
-              <Card className="mt-8 p-6 bg-zinc-900 border-zinc-800">
-                <h3 className="text-lg font-medium mb-4">Generated Response:</h3>
-                <div className="prose prose-invert max-w-none">
-                  <p className="text-zinc-300 whitespace-pre-wrap">{response}</p>
+                  <Textarea
+                    placeholder="Describe what you want to build..."
+                    value={prompt}
+                    onChange={(e) => setPrompt(e.target.value)}
+                    className="min-h-[120px] bg-zinc-900 border-zinc-800"
+                  />
                 </div>
-              </Card>
-            )}
 
-            <p className="text-center text-xs text-zinc-600">
-              Found bugs that needs squashing? Report bugs here:
-              <br />
-              info@copycoder.ai
-            </p>
-          </form>
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={loading || !prompt || !isLoggedIn}
+                >
+                  {loading ? 'Generating...' : 'Generate Prompt'}
+                </Button>
+              </form>
+
+              {response && (
+                <Card className="mt-4 p-4 bg-zinc-900 border-zinc-800">
+                  <pre className="whitespace-pre-wrap text-sm">{response}</pre>
+                </Card>
+              )}
+            </div>
+            
+            {isLoggedIn === false && (
+              <LoginOverlay onLogin={handleLogin} error={error} />
+            )}
+          </div>
         </div>
       </main>
-
-      {!isLoggedIn && (
-        <LoginOverlay onLogin={handleLogin} error={error} />
-      )}
     </div>
   );
 }

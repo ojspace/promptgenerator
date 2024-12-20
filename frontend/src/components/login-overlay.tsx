@@ -30,45 +30,40 @@ export function LoginOverlay({ onLogin, error }: LoginOverlayProps) {
   };
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center">
-      <Card className="w-full max-w-md p-6 bg-zinc-900 border-zinc-800">
+    <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-50">
+      <Card className="w-full max-w-md p-6 bg-zinc-900/90 border-zinc-800">
         <div className="text-center space-y-4">
           <h2 className="text-2xl font-bold text-white">Sign in to continue</h2>
           <p className="text-zinc-400">Enter your email to receive a magic link</p>
         </div>
 
         {!isSent ? (
-          <form onSubmit={handleSubmit} className="mt-8 space-y-4">
+          <form onSubmit={handleSubmit} className="mt-6 space-y-4">
             <Input
               type="email"
               placeholder="Enter your email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="bg-black border-zinc-800 text-white placeholder:text-zinc-500"
+              className="bg-black/50 border-zinc-800 text-white placeholder:text-zinc-500"
               required
               disabled={isLoading}
             />
             {error && (
-              <p className="text-sm text-red-500">{error}</p>
+              <p className="text-red-500 text-sm">{error}</p>
             )}
-            <Button 
-              type="submit" 
-              className="w-full bg-blue-600 hover:bg-blue-700 text-white"
+            <Button
+              type="submit"
+              className="w-full"
               disabled={isLoading}
             >
-              {isLoading ? 'Sending...' : 'Send magic link'}
+              {isLoading ? 'Sending...' : 'Send Magic Link'}
             </Button>
           </form>
         ) : (
-          <div className="mt-8 space-y-4 text-center">
-            <div className="text-green-400 text-xl">✓ Magic link sent!</div>
-            <p className="text-sm text-zinc-400">
+          <div className="mt-6 space-y-4 text-center">
+            <div className="text-green-500">✓ Magic link sent!</div>
+            <p className="text-zinc-400">
               Check your email for the magic link to sign in.
-              <br />
-              The link will expire in 5 minutes.
-            </p>
-            <p className="text-xs text-zinc-500 mt-4">
-              Didn't receive the email? Check your spam folder or try again.
             </p>
           </div>
         )}
